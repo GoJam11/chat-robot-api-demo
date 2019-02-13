@@ -28,47 +28,40 @@
           <el-button slot="reference" style="float: right; padding: 3px 0" type="text">查看帮助</el-button>
         </el-popover>
       </div>
-      
-       
-        <el-container direction="vertical" class="main_footer">
-          <el-main style="overflow-y :auto;" class="main" ref="main" id="main">
-            <p
-              v-for="item in textgroups"
-              :key="item.id"
-              :class="{left:item.robot,right:!item.robot}"
-            >
-              <el-card
-                shadow="hover"
-                :class="{robot:item.robot,me:!item.robot}"
-                class="card"
-              >{{item.content}}</el-card>
-            </p>
-            <!--<el-card
+
+      <el-container direction="vertical" class="main_footer">
+        <el-main style="overflow-y :auto;" class="main" ref="main" id="main">
+          <p v-for="item in textgroups" :key="item.id" :class="{left:item.robot,right:!item.robot}">
+            <el-card
+              shadow="hover"
+              :class="{robot:item.robot,me:!item.robot}"
+              class="card"
+            >{{item.content}}</el-card>
+          </p>
+          <!--<el-card
               shadow="hover"
               v-for="item in textgroups"
               :key="item.id"
               :class="{left:item.robot,right:!item.robot}"
             >
               <span :class="{robot:item.robot,me:!item.robot}">{{item.content}}</span>
-            </el-card>-->
-          </el-main>
-          <el-footer >
-            <el-input
-              type="textarea"
-              resize="none"
-              placeholder="请输入内容"
-              v-model="textarea3"
-              autofocus="true"
-              v-on:keydown.enter.native="submit"
-            ></el-input>
-            <!--:autosize="{ minRows: 2, maxRows: 4}"-->
-            <div class="submit">
-            <el-button type="primary" size="mini" @click="submit"  >发送</el-button>
+          </el-card>-->
+        </el-main>
+        <el-footer>
+          <el-input
+            type="textarea"
+            resize="none"
+            placeholder="请输入内容"
+            v-model="textarea3"
+            autofocus="true"
+            v-on:keydown.enter.native="submit"
+          ></el-input>
+          <!--:autosize="{ minRows: 2, maxRows: 4}"-->
+          <div class="submit">
+            <el-button type="primary" size="mini" @click="submit">发送</el-button>
           </div>
-          </el-footer>
-          
-        </el-container>
-      
+        </el-footer>
+      </el-container>
     </el-card>
   </div>
 </template>
@@ -85,7 +78,30 @@ export default {
     return {
       textarea3: "",
       text: "文本在这里",
-      textgroups: [{ content: "hello", id: 0, robot: true }]
+      textgroups: [{ content: "hello", id: 0, robot: true }],
+      api: [
+        {
+          apikey: "14322298e9b54342bbcb56249595122b",
+          userid: "da22a684c737f0e3"
+        },
+        {
+          apikey: "304f40ddd4054b5cb8e26f4ab222a6d4",
+          userid: "c6c11023a55952fb"
+        },
+        {
+          apikey: "5534575101d14aceb12aa7a821efa3b4",
+          userid: "47b9bd0bb1e65526"
+        },
+        {
+          apikey:"61d2906953ff427397831e264a870ebb",
+          userid:"89247baa3d141213"
+        },
+        {
+          apikey:"4eab2b664c3d41d48cb862b9e37592d8",
+          userid:"d3f1df6d59fe2f7e"
+        }
+      ],
+      nowtext: ""
     };
   },
   methods: {
@@ -99,6 +115,8 @@ export default {
         robot: false,
         id: this.textgroups.length
       });
+      this.nowtext = this.textarea3;
+      this.textarea3 = "";
       setTimeout(() => {
         window.document.getElementById(
           "main"
@@ -108,16 +126,17 @@ export default {
       this.$message({ message: "发送成功！", type: "success" });
     },
     getResponse: function() {
-      this.$jsonp("http://api.guohere.com/tuling123.php", {
-        text: this.textarea3,
-        apikey: "304f40ddd4054b5cb8e26f4ab222a6d4",
-        userid: "c6c11023a55952fb"
-      })
-        .then(res => {
-          console.log(res.results[0].values.text);
-          this.textarea3 = "";
+      var robot_reply = "";
+      this.jsonp(0);
+      console.log("3" + robot_reply);
+    },
+    jsonp: function(index) {
+      var robot_reply = "";
+      if (index == this.api.length) {
+        if (robot_reply == "") {
+          robot_reply = "我今天太累啦，明天再来找我吧";
           this.textgroups.push({
-            content: res.results[0].values.text,
+            content: robot_reply,
             robot: true,
             id: this.textgroups.length
           });
@@ -126,6 +145,33 @@ export default {
               "main"
             ).scrollTop = window.document.getElementById("main").scrollHeight;
           }, 20);
+        }
+        return;
+      }
+      this.$jsonp("http://api.guohere.com/tuling123.php", {
+        text: this.nowtext,
+        apikey: this.api[index].apikey,
+        userid: this.api[index].userid
+      })
+        .then(res => {
+          index++;
+          console.log("1" + res.results[0].values.text);
+          var robot_reply = res.results[0].values.text;
+          if (("请求次数超限制!" || "加密方式错误!") == robot_reply) {
+            this.jsonp(index);
+          } else {
+            console.log("2" + robot_reply);
+            this.textgroups.push({
+              content: robot_reply,
+              robot: true,
+              id: this.textgroups.length
+            });
+            setTimeout(() => {
+              window.document.getElementById(
+                "main"
+              ).scrollTop = window.document.getElementById("main").scrollHeight;
+            }, 20);
+          }
         })
         .catch(err => {
           console.log(err);
@@ -189,11 +235,11 @@ export default {
     margin: auto;
     margin-top: 60px;
   }
-  .main_footer{
-    margin-bottom: 13px
+  .main_footer {
+    margin-bottom: 13px;
   }
-  .main{
-    max-height:400px
+  .main {
+    max-height: 400px;
   }
 }
 
@@ -213,13 +259,13 @@ export default {
     height: 100%;
   }
 
-  #card{
+  #card {
     height: 97%;
   }
-  .el-card__body{
+  .el-card__body {
     height: 80%;
   }
-  .main_footer{
+  .main_footer {
     height: 100%;
   }
 }
@@ -260,7 +306,7 @@ export default {
   width: 80px;
   justify-content: flex-end;
   width: 100%;
-  margin-top:5px;
+  margin-top: 5px;
   display: flex;
 }
 
