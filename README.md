@@ -29,3 +29,5 @@ npm run lint
 See [Configuration Reference](https://cli.vuejs.org/config/).
 # chat-robot-api-demo
 a chat window
+
+[visit demo](http://demo.guohere.com/chat/)
